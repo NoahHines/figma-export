@@ -29,7 +29,7 @@ final class XcodeColorExporterTests: XCTestCase {
     // MARK: - Tests
     
     func testExport_without_assets() {
-        let output = XcodeColorsOutput(assetsColorsURL: nil, assetsInMainBundle: true, colorSwiftURL: colorsFile)
+        let output = XcodeColorsOutput(assetsColorsURL: nil, assetsInMainBundle: true, colorSwiftURL: colorsFile, systemName: "DesignSystem")
         let exporter = XcodeColorExporter(output: output)
         
         let result = exporter.export(colorPairs: [colorPair1, colorPair2])
@@ -44,38 +44,47 @@ final class XcodeColorExporterTests: XCTestCase {
         //  The code generated using FigmaExport — Command line utility to export
         //  colors, typography, icons and images from Figma to Xcode project.
         //
-        //  https://github.com/RedMadRobot/figma-export
+        //  https://github.com/NoahHines/figma-export
         //
         //  Don’t edit this code manually to avoid runtime crashes
         //
 
+        #if os(iOS)
+
         import UIKit
 
-        public extension UIColor {
-            static var colorPair1: UIColor {
-                if #available(iOS 13.0, *) {
-                    return UIColor { traitCollection -> UIColor in
-                        if traitCollection.userInterfaceStyle == .dark {
-                            return UIColor(red: 0.000, green: 0.000, blue: 0.000, alpha: 1.000)
-                        } else {
-                            return UIColor(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
+        public extension DesignSystem {
+
+            public extension UIColor {
+
+                public static var colorPair1: UIColor {
+                    if #available(iOS 13.0, *) {
+                        return UIColor { traitCollection -> UIColor in
+                            if traitCollection.userInterfaceStyle == .dark {
+                                return UIColor(red: 0.000, green: 0.000, blue: 0.000, alpha: 1.000)
+                            } else {
+                                return UIColor(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
+                            }
                         }
+                    } else {
+                        return UIColor(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
                     }
-                } else {
-                    return UIColor(red: 1.000, green: 1.000, blue: 1.000, alpha: 1.000)
+                }
+
+                public static var colorPair2: UIColor {
+                    return UIColor(red: 0.467, green: 0.012, blue: 1.000, alpha: 0.500)
                 }
             }
-            static var colorPair2: UIColor {
-                return UIColor(red: 0.467, green: 0.012, blue: 1.000, alpha: 0.500)
-            }
         }
+
+        #endif
 
         """
         XCTAssertEqual(generatedCode, referenceCode)
     }
     
     func testExport_with_assets() {
-        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: true, colorSwiftURL: colorsFile)
+        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: true, colorSwiftURL: colorsFile, systemName: "DesignSystem")
         let exporter = XcodeColorExporter(output: output)
         let result = exporter.export(colorPairs: [colorPair1, colorPair2])
         
@@ -94,24 +103,33 @@ final class XcodeColorExporterTests: XCTestCase {
         //  The code generated using FigmaExport — Command line utility to export
         //  colors, typography, icons and images from Figma to Xcode project.
         //
-        //  https://github.com/RedMadRobot/figma-export
+        //  https://github.com/NoahHines/figma-export
         //
         //  Don’t edit this code manually to avoid runtime crashes
         //
 
+        #if os(iOS)
+
         import UIKit
 
-        public extension UIColor {
+        public extension DesignSystem {
+
+            public extension UIColor {
+
             static var colorPair1: UIColor { UIColor(named: #function)! }
+
             static var colorPair2: UIColor { UIColor(named: #function)! }
+            }
         }
+
+        #endif
 
         """
         XCTAssertEqual(generatedCode, referenceCode)
     }
     
     func testExport_with_assets_in_separate_bundle() {
-        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: false, colorSwiftURL: colorsFile)
+        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: false, colorSwiftURL: colorsFile, systemName: "DesignSystem")
         let exporter = XcodeColorExporter(output: output)
         let result = exporter.export(colorPairs: [colorPair1, colorPair2])
         
@@ -130,28 +148,37 @@ final class XcodeColorExporterTests: XCTestCase {
         //  The code generated using FigmaExport — Command line utility to export
         //  colors, typography, icons and images from Figma to Xcode project.
         //
-        //  https://github.com/RedMadRobot/figma-export
+        //  https://github.com/NoahHines/figma-export
         //
         //  Don’t edit this code manually to avoid runtime crashes
         //
 
+        #if os(iOS)
+
         import UIKit
+
+        public extension DesignSystem {
 
         private class BundleProvider {
             static let bundle = Bundle(for: BundleProvider.self)
         }
 
-        public extension UIColor {
+            public extension UIColor {
+
             static var colorPair1: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+
             static var colorPair2: UIColor { UIColor(named: #function, in: BundleProvider.bundle, compatibleWith: nil)! }
+            }
         }
+
+        #endif
 
         """
         XCTAssertEqual(generatedCode, referenceCode)
     }
     
     func testExport_swiftui() {
-        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: true, colorSwiftURL: nil, swiftuiColorSwiftURL: colorsFile)
+        let output = XcodeColorsOutput(assetsColorsURL: colorsAsssetCatalog, assetsInMainBundle: true, colorSwiftURL: nil, swiftuiColorSwiftURL: colorsFile, systemName: "DesignSystem")
         let exporter = XcodeColorExporter(output: output)
         let result = exporter.export(colorPairs: [colorPair1, colorPair2])
         
@@ -170,10 +197,12 @@ final class XcodeColorExporterTests: XCTestCase {
         //  The code generated using FigmaExport — Command line utility to export
         //  colors, typography, icons and images from Figma to Xcode project.
         //
-        //  https://github.com/RedMadRobot/figma-export
+        //  https://github.com/NoahHines/figma-export
         //
         //  Don’t edit this code manually to avoid runtime crashes
         //
+
+        #if os(iOS)
 
         import SwiftUI
 
@@ -181,6 +210,8 @@ final class XcodeColorExporterTests: XCTestCase {
             static var colorPair1: Color { Color(#function) }
             static var colorPair2: Color { Color(#function) }
         }
+
+        #endif
 
         """
         XCTAssertEqual(generatedCode, referenceCode)

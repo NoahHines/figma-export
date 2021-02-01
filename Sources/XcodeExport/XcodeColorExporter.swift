@@ -103,13 +103,17 @@ final public class XcodeColorExporter {
         
         return """
         \(header)
+
+        #if os(iOS)
         
         import SwiftUI
         \(output.assetsInMainBundle ? "" : bundleProvider)
         public extension Color {
         \(strings.joined(separator: "\n"))
         }
-        
+
+        #endif
+
         """
     }
     
@@ -128,40 +132,56 @@ final public class XcodeColorExporter {
                 let lightComponents = colorPair.light.toRgbComponents()
                 if let darkComponents = colorPair.dark?.toRgbComponents() {
                     content = """
-                        static var \(colorPair.light.name): UIColor {
-                            if #available(iOS 13.0, *) {
-                                return UIColor { traitCollection -> UIColor in
-                                    if traitCollection.userInterfaceStyle == .dark {
-                                        return UIColor(red: \(darkComponents.red), green: \(darkComponents.green), blue: \(darkComponents.blue), alpha: \(darkComponents.alpha))
-                                    } else {
-                                        return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
+                            public static var \(colorPair.light.name): UIColor {
+                                if #available(iOS 13.0, *) {
+                                    return UIColor { traitCollection -> UIColor in
+                                        if traitCollection.userInterfaceStyle == .dark {
+                                            return UIColor(red: \(darkComponents.red), green: \(darkComponents.green), blue: \(darkComponents.blue), alpha: \(darkComponents.alpha))
+                                        } else {
+                                            return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
+                                        }
                                     }
+                                } else {
+                                    return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
                                 }
-                            } else {
-                                return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
                             }
-                        }
                     """
                 } else {
                     content = """
-                        static var \(colorPair.light.name): UIColor {
-                            return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
-                        }
+                            public static var \(colorPair.light.name): UIColor {
+                                return UIColor(red: \(lightComponents.red), green: \(lightComponents.green), blue: \(lightComponents.blue), alpha: \(lightComponents.alpha))
+                            }
                     """
                 }
             }
             contents.append(content)
         }
+
+        let classOrExtension: String = {
+            if let colorClassName = output.colorClassName {
+                return "public class \(colorClassName)"
+            } else {
+                return "public extension UIColor"
+            }
+        }()
         
         return """
         \(header)
 
+        #if os(iOS)
+
         import UIKit
+
+        public extension \(output.systemName) {
         \((!output.assetsInMainBundle && formAsset) ? bundleProvider : "")
-        public extension UIColor {
-        \(contents.joined(separator: "\n"))
+            \(classOrExtension) {
+
+        \(contents.joined(separator: "\n\n"))
+            }
         }
-        
+
+        #endif
+
         """
     }
 }

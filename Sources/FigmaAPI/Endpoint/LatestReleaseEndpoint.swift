@@ -7,7 +7,7 @@ public struct LatestReleaseEndpoint: BaseEndpoint {
     public init() {}
     
     public func makeRequest(baseURL: URL) -> URLRequest {
-        let url = baseURL.appendingPathComponent("repos/RedMadRobot/figma-export/releases/latest")
+        let url = baseURL.appendingPathComponent("repos/NoahHines/figma-export/releases/latest")
         return URLRequest(url: url)
     }
 }

@@ -36,10 +36,15 @@ extension FigmaExportCommand {
         }
         
         private func exportXcodeTextStyles(textStyles: [TextStyle], iosParams: Params.iOS, logger: Logger) throws {
-            let exporter = XcodeTypographyExporter()
+            let exporter = XcodeTypographyExporter(systemName: iosParams.systemName)
             
             var files: [FileContents] = []
-            
+
+            // DesignSystem root
+            files.append(contentsOf: XcodeDesignSystemRoot.export(
+                            rootPath: iosParams.rootPath,
+                            systemName: iosParams.systemName))
+
             // UIKit UIFont extension
             if let fontExtensionURL = iosParams.typography.fontSwift {
                 files.append(contentsOf: try exporter.exportFonts(
@@ -66,18 +71,6 @@ extension FigmaExportCommand {
                 ))
             }
             try fileWritter.write(files: files)
-            
-            do {
-                let xcodeProject = try XcodeProjectWritter(xcodeProjPath: iosParams.xcodeprojPath, target: iosParams.target)
-                try files.forEach { file in
-                    if file.destination.file.pathExtension == "swift" {
-                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                    }
-                }
-                try xcodeProject.save()
-            } catch {
-                logger.error("Unable to add some file references to Xcode project")
-            }
         }
     }
 }

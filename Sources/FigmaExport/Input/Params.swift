@@ -42,6 +42,7 @@ struct Params: Decodable {
     struct iOS: Decodable {
         
         struct Colors: Decodable {
+            let colorClassName: String
             let useColorAssets: Bool
             let assetsFolder: String?
             let nameStyle: NameStyle
@@ -85,6 +86,8 @@ struct Params: Decodable {
         let icons: Icons
         let images: Images
         let typography: Typography
+        let systemName: String
+        let rootPath: String
     }
 
     struct Android: Decodable {
