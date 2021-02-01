@@ -8,7 +8,17 @@ final public class XcodeTypographyExporter {
     
     public func exportFonts(textStyles: [TextStyle], fontExtensionURL: URL) throws -> [FileContents] {
         let strings: [String] = textStyles.map {
+
             let dynamicType: String = $0.fontStyle != nil ? ", textStyle: .\($0.fontStyle!.textStyleName), scaled: true" : ""
+            
+            if let fontSizeRange = $0.fontSizeRange {
+                return """
+                static func \($0.name)(_ traitCollection: UITraitCollection? = nil) -> UIFont {
+                    customFont("\($0.fontName)", traitCollection: traitCollection, compact: \(fontSizeRange.compact), regular: \(fontSizeRange.regular)\(dynamicType))
+                }
+            """
+            }
+
             return """
                 static func \($0.name)() -> UIFont {
                     customFont("\($0.fontName)", size: \($0.fontSize)\(dynamicType))
@@ -17,18 +27,54 @@ final public class XcodeTypographyExporter {
         }
         let contents = """
         \(header)
-        
+
+        #if os(iOS)
+
         import UIKit
 
-        public extension UIFont {
+        public class ScribdFont {
         
         \(strings.joined(separator: "\n\n"))
-        
+
             private static func customFont(
                 _ name: String,
                 size: CGFloat,
                 textStyle: UIFont.TextStyle? = nil,
                 scaled: Bool = false) -> UIFont {
+                return customFont(name,
+                                  traitCollection: nil,
+                                  compact: size,
+                                  regular: size,
+                                  textStyle: textStyle,
+                                  scaled: scaled)
+            }
+
+            private static func customFont(
+                _ name: String,
+                traitCollection: UITraitCollection?,
+                compact: CGFloat,
+                regular: CGFloat,
+                textStyle: UIFont.TextStyle? = nil,
+                scaled: Bool = false) -> UIFont {
+
+                let size: CGFloat = {
+                    let resolvedTraitCollection: UITraitCollection
+                    if #available(iOS 13.0, *) {
+                        resolvedTraitCollection = traitCollection ?? .current
+                    } else {
+                        resolvedTraitCollection = UITraitCollection(horizontalSizeClass: .compact)
+                    }
+
+                    switch resolvedTraitCollection.horizontalSizeClass {
+                    case .regular:
+                        return regular
+                    case .compact,
+                         .unspecified:
+                        return compact
+                    @unknown default:
+                        return compact
+                    }
+                }()
 
                 guard let font = UIFont(name: name, size: size) else {
                     print("Warning: Font \\(name) not found.")
@@ -43,6 +89,9 @@ final public class XcodeTypographyExporter {
                 }
             }
         }
+
+        #endif
+
         """
         
         let data = contents.data(using: .utf8)!
@@ -65,6 +114,8 @@ final public class XcodeTypographyExporter {
         
         let contents = """
         \(header)
+
+        #if os(iOS)
         
         import SwiftUI
 
@@ -72,6 +123,9 @@ final public class XcodeTypographyExporter {
             
         \(strings.joined(separator: "\n"))
         }
+
+        #endif
+
         """
 
         let data = contents.data(using: .utf8)!

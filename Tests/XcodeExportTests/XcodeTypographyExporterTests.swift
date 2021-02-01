@@ -11,7 +11,7 @@ final class XcodeTypographyExporterTests: XCTestCase {
         
         let styles = [
             makeTextStyle(name: "largeTitle", fontName: "PTSans-Bold", fontStyle: .largeTitle, fontSize: 34),
-            makeTextStyle(name: "header", fontName: "PTSans-Bold", fontSize: 20),
+            makeTextStyle(name: "header", fontName: "PTSans-Bold", fontSize: 20, fontSizeRange: FontSizeRange(compact: 20, regular: 22)),
             makeTextStyle(name: "body", fontName: "PTSans-Regular", fontStyle: .body, fontSize: 16),
             makeTextStyle(name: "caption", fontName: "PTSans-Regular", fontStyle: .footnote, fontSize: 14, lineHeight: 20)
         ]
@@ -34,9 +34,9 @@ final class XcodeTypographyExporterTests: XCTestCase {
             static func largeTitle() -> UIFont {
                 customFont("PTSans-Bold", size: 34.0, textStyle: .largeTitle, scaled: true)
             }
-        
-            static func header() -> UIFont {
-                customFont("PTSans-Bold", size: 20.0)
+
+            static func header(_ traitCollection: UITraitCollection? = nil) -> UIFont {
+                customFont("PTSans-Bold", traitCollection: traitCollection, compact: 20.0, regular: 22.0)
             }
         
             static func body() -> UIFont {
@@ -52,6 +52,40 @@ final class XcodeTypographyExporterTests: XCTestCase {
                 size: CGFloat,
                 textStyle: UIFont.TextStyle? = nil,
                 scaled: Bool = false) -> UIFont {
+                return customFont(name,
+                                  traitCollection: nil,
+                                  compact: size,
+                                  regular: size,
+                                  textStyle: textStyle,
+                                  scaled: scaled)
+            }
+
+            private static func customFont(
+                _ name: String,
+                traitCollection: UITraitCollection?,
+                compact: CGFloat,
+                regular: CGFloat,
+                textStyle: UIFont.TextStyle? = nil,
+                scaled: Bool = false) -> UIFont {
+
+                let size: CGFloat = {
+                    let resolvedTraitCollection: UITraitCollection
+                    if #available(iOS 13.0, *) {
+                        resolvedTraitCollection = traitCollection ?? .current
+                    } else {
+                        resolvedTraitCollection = UITraitCollection(horizontalSizeClass: .compact)
+                    }
+
+                    switch resolvedTraitCollection.horizontalSizeClass {
+                    case .regular:
+                        return regular
+                    case .compact,
+                         .unspecified:
+                        return compact
+                    @unknown default:
+                        return compact
+                    }
+                }()
 
                 guard let font = UIFont(name: name, size: size) else {
                     print("Warning: Font \\(name) not found.")
@@ -66,23 +100,26 @@ final class XcodeTypographyExporterTests: XCTestCase {
                 }
             }
         }
+
         """
         
         files.forEach {
             print(String(data: $0.data!, encoding: .utf8)!)
         }
+
+        let newFiles = [
+            FileContents(
+                destination: Destination(
+                    directory: URL(string: "~/")!,
+                    file: URL(string: "UIFont+extension.swift")!
+                ),
+                data: contents.data(using: .utf8)!
+            )
+        ]
         
         XCTAssertEqual(
             files,
-            [
-                FileContents(
-                    destination: Destination(
-                        directory: URL(string: "~/")!,
-                        file: URL(string: "UIFont+extension.swift")!
-                    ),
-                    data: contents.data(using: .utf8)!
-                )
-            ]
+            newFiles
         )
     }
     
@@ -91,7 +128,7 @@ final class XcodeTypographyExporterTests: XCTestCase {
         
         let styles = [
             makeTextStyle(name: "largeTitle", fontName: "PTSans-Bold", fontStyle: .largeTitle, fontSize: 34),
-            makeTextStyle(name: "header", fontName: "PTSans-Bold", fontSize: 20),
+            makeTextStyle(name: "header", fontName: "PTSans-Bold", fontSize: 20, fontSizeRange: FontSizeRange(compact: 20, regular: 22)),
             makeTextStyle(name: "body", fontName: "PTSans-Regular", fontStyle: .body, fontSize: 16),
             makeTextStyle(name: "caption", fontName: "PTSans-Regular", fontStyle: .footnote, fontSize: 14, lineHeight: 20)
         ]
@@ -358,6 +395,7 @@ final class XcodeTypographyExporterTests: XCTestCase {
         fontName: String = "fontName",
         fontStyle: DynamicTypeStyle? = nil,
         fontSize: Double,
+        fontSizeRange: FontSizeRange? = nil,
         lineHeight: Double? = nil,
         letterSpacing: Double = 0) -> TextStyle {
         
@@ -365,6 +403,7 @@ final class XcodeTypographyExporterTests: XCTestCase {
             name: name,
             fontName: fontName,
             fontSize: fontSize,
+            fontSizeRange: fontSizeRange,
             fontStyle: fontStyle,
             lineHeight: lineHeight,
             letterSpacing: letterSpacing)

@@ -32,12 +32,13 @@ final class TextStylesLoader {
             guard let textStyle = node.document.style else { return nil }
             
             let lineHeight: Double? = textStyle.lineHeightUnit == .intrinsic ? nil : textStyle.lineHeightPx
-            
+
             return TextStyle(
                 name: style.name,
                 fontName: textStyle.fontPostScriptName,
                 fontSize: textStyle.fontSize,
-                fontStyle: DynamicTypeStyle(rawValue: style.description),
+                fontSizeRange: FontSizeRange(style.description),
+                fontStyle: DynamicTypeStyle(style.description),
                 lineHeight: lineHeight,
                 letterSpacing: textStyle.letterSpacing
             )

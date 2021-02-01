@@ -103,13 +103,17 @@ final public class XcodeColorExporter {
         
         return """
         \(header)
+
+        #if os(iOS)
         
         import SwiftUI
         \(output.assetsInMainBundle ? "" : bundleProvider)
         public extension Color {
         \(strings.joined(separator: "\n"))
         }
-        
+
+        #endif
+
         """
     }
     
@@ -156,12 +160,16 @@ final public class XcodeColorExporter {
         return """
         \(header)
 
+        #if os(iOS)
+
         import UIKit
         \((!output.assetsInMainBundle && formAsset) ? bundleProvider : "")
-        public extension UIColor {
+        public class ScribdBrand {
         \(contents.joined(separator: "\n"))
         }
-        
+
+        #endif
+
         """
     }
 }

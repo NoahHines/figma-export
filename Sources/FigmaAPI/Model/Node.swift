@@ -29,6 +29,8 @@ public struct TypeStyle: Decodable {
     public var lineHeightPx: Double
     public var letterSpacing: Double
     public var lineHeightUnit: LineHeightUnit
+    public var minFontSize: Double?
+    public var maxFontSize: Double?
 }
 
 public struct Document: Decodable {
